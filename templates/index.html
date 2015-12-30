@@ -1,0 +1,79 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Goto</title>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="Simple internal URL shortener" />
+    <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico" />
+    <link rel="stylesheet" href="/static/normalize.css" />
+    <link rel="stylesheet" href="/static/app.css" />
+    <script src="/static/webcomponents.min.js"></script>
+  </head>
+  <body>
+    <h1 class="title"><a href="{{ url_for('index') }}">Goto</a></h1>
+    <div class="layout">
+      <section class="layout__box goto__input-box">
+        <form method="POST" action="/">
+          <ul class="inline-list">
+            <li><input required type="text" name="name" placeholder="name" value="{{ name }}"/></li>
+            <li><input required type="text" name="url" placeholder="url"{%- if name %}autofocus{% endif -%}/></li>
+            <li><button type="submit">Add link</button></li>
+          </ul>
+        </form>
+      </section>
+
+      {%- with errors = get_flashed_messages(category_filter=["error"]) %}
+      {%- if errors %}
+      <section class="layout__box layout__box--error">
+        <ul>
+          {%- for msg in errors %}
+          <li>{{ msg }}</li>
+          {% endfor -%}
+        </ul>
+      </section>
+      {% endif -%}
+      {% endwith -%}
+
+      {%- with successes = get_flashed_messages(category_filter=["success"]) %}
+      {%- if successes %}
+      <section class="layout__box layout__box--success">
+        <ul>
+          {%- for msg in successes %}
+          <li>{{ msg }}</li>
+          {% endfor -%}
+        </ul>
+      </section>
+      {% endif -%}
+      {% endwith -%}
+
+      <section class="layout__box goto__links">
+      {%- if g.links %}
+        <table class="goto__link__table" data-sortable>
+          <thead>
+            <th>Name</th>
+            <th>URL</th>
+            <th>Date</th>
+            <th data-sorted-direction="descending">Visits</th>
+          </thead>
+          <tbody>
+          {%- for link in g.links %}
+            <tr>
+              <td><a href="/{{ link.name }}">{{ link.name }}</a></td>
+              <td><a href="{{ link.url }}">{{ link.url }}</a></td>
+              <td data-value="{{ link.date }}"><time datetime="{{ link.date }}" is="relative-time">{{ link.date }}</time></td>
+              <td>{{ link.visits }}</td>
+            </tr>
+          {% endfor -%}
+          </tbody>
+        </table>
+      {% else %}
+      <h3 class="help">No links added yet. Go ahead and add one!</h3>
+      {% endif -%}
+      </section>
+    </div>
+    <script async src="/static/time-elements.js"></script>
+    <script async src="/static/sortable.min.js"></script>
+  </body>
+</html>
