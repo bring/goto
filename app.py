@@ -93,4 +93,4 @@ def delete_link(name):
         return make_response(render_template('index.html', name=name), 404)
 
 if __name__ == "__main__":
-    app.run()
+    app.run(port=7410)
