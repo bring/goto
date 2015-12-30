@@ -92,5 +92,27 @@ def delete_link(name):
         flash(u"The link {} doesn't even exist, cannot delete it".format(name), "error")
         return make_response(render_template('index.html', name=name), 404)
 
+@app.route("/opensearch.xml")
+def opensearch():
+    response = make_response(render_template("opensearch.xml"))
+    response.headers["Content-Type"] = "application/xml; charset=utf-8"
+    return response
+
+@app.route("/search/suggest/<prefix>")
+def suggest(prefix):
+    suggestions = [l['name'] for l in g.links if l['name'].lower().startswith(prefix.lower())]
+    result = [prefix, suggestions]
+    response = make_response(json.dumps(result))
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "-1"
+    response.headers["Cache-Control"] = "no-cache, must-revalidate"
+    response.headers["Content-Type"] = "text/javascript; charset=utf-8"
+    response.headers["Content-Disposition"] = 'attachment; filename="f.txt"'
+    response.headers["X-XSS-Protection"] = "1; mode=block"
+    response.headers["X-Frame-Options"] = "SAMEORIGIN"
+    response.headers["Accept-Ranges"] = "none"
+    response.headers["Vary"] = "Accept-Encoding"
+    return response
+
 if __name__ == "__main__":
     app.run(port=7410)

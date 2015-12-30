@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<OpenSearchDescription xmlns="http://a9.com/-/spec/opensearch/1.1/" xmlns:moz="http://www.mozilla.org/2006/browser/search/">
+  <ShortName>go</ShortName>
+  <Description>Goto a shortened URL</Description>
+  <InputEncoding>UTF-8</InputEncoding>
+  <OutputEncoding>UTF-8</OutputEncoding>
+  <Url type="application/x-suggestions+json" method="GET" template="{{ url_for('suggest', prefix='', _external=True) }}{searchterms}" />
+  <Url type="text/html" method="GET" template="{{ url_for('goto', name='', _external=True) }}{searchterms}" />
+  <Url type="application/opensearchdescription+xml" rel="self" template="{{ url_for('opensearch', _external=True) }}"/>
+  <Image height="16" width="16" type="image/vnd.microsoft.icon">{{ url_for('static', filename="favicon.ico") }}</Image>
+  <searchform>{{ url_for('index', _external=True) }}</searchform>
+  <moz:SearchForm>{{ url_for('index', _external=True) }}</moz:SearchForm>
+</OpenSearchDescription>

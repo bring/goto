@@ -6,6 +6,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="description" content="Simple internal URL shortener" />
+    <link rel="search" title="go" href="{{ url_for('opensearch', _external=True) }}" type="application/opensearchdescription+xml"/>
     <link rel="shortcut icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}" />
     <link rel="stylesheet" href="{{ url_for('static', filename='normalize.css') }}" />
     <link rel="stylesheet" href="{{ url_for('static', filename='app.css') }}" />
