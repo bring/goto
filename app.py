@@ -2,7 +2,13 @@
 
 import json
 import time
+import os
+import signal
+import sys
 from flask import Flask, g, flash, request, redirect, render_template, make_response, url_for
+from tornado.wsgi import WSGIContainer
+from tornado.httpserver import HTTPServer
+from tornado.ioloop import IOLoop
 
 links_file = "./links.json"
 
@@ -115,4 +121,12 @@ def suggest(prefix):
     return response
 
 if __name__ == "__main__":
-    app.run(port=7410)
+    def on_exit(sig, func=None):
+        print "Gonna go ahead and die"
+        sys.exit(1)
+    signal.signal(signal.SIGTERM, on_exit)
+    port = 7410
+    http_server = HTTPServer(WSGIContainer(app))
+    http_server.listen(port)
+    print "Server listening on port {}".format(port)
+    IOLoop.current().start()
