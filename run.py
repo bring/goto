@@ -118,14 +118,29 @@ def suggest(prefix):
     response.headers["Vary"] = "Accept-Encoding"
     return response
 
+def log(message):
+    timestamp = time.strftime("%Y-%m-%dT%H:%M:%S%z", time.localtime())
+    print "{timestamp} - {message}".format(**locals())
+
+def run_server(opts):
+    if opts.data_dir is not None:
+        global links_file
+        links_file = "{}/links.json".format(opts.data_dir)
+
+    http_server = HTTPServer(WSGIContainer(app))
+    http_server.listen(opts.port)
+    log("Server listening on http://0.0.0.0:{}/ (pid: {})".format(opts.port, os.getpid()))
+
+    if opts.pid_file is not None:
+        file(opts.pid_file, 'w').write(str(os.getpid()))
+
+    IOLoop.current().start()
+
+
 def main(argv):
     def on_exit(sig, func=None):
-        print "Close application"
+        log("Close application (signal: {})".format(sig))
         IOLoop.current().stop()
-
-    def write_pid(pid_file):
-        pid = str(os.getpid())
-        file(pid_file, 'w').write(pid)
 
     parser = ArgumentParser(
         prog=os.path.basename(__file__),
@@ -135,39 +150,39 @@ def main(argv):
     parser.add_argument("-d", "--data-dir",
         help="store data in given directory (default: current directory)",
         default=".")
-    parser.add_argument("-D", "--daemonize",
-        help="run server in background (default: run in foreground)",
-        action="store_true")
     parser.add_argument("-p", "--port",
         help="set listen port (default: 7410)",
         type=int, default=7410)
+    parser.add_argument("-D", "--daemonize",
+        help="run server in background (default: run in foreground)",
+        action="store_true")
     parser.add_argument("-P", "--pid-file",
-        help="store pid in a file (default: don't store)")
+        help="where to store pid when daemonizing (default: don't store)")
+    parser.add_argument("-w", "--work-dir",
+        help="working directory to set when daemonizing (default: current directory)",
+        default=".")
+    parser.add_argument("-l", "--log-dir",
+        help="log directory to set when daemonizing (default: current directory)",
+        default=".")
 
     opts = parser.parse_args()
-
-    if opts.data_dir is not None:
-        print "Set data_dir to {}".format(opts.data_dir)
-        links_file = "{}/links.json".format(opts.data_dir)
-
-    if opts.pid_file is not None:
-        print "Write pid to {}".format(opts.pid_file)
-        write_pid(opts.pid_file)
-
-    if opts.daemonize:
-        print "run in background"
-    else:
-        print "run in foreground"
-
-    http_server = HTTPServer(WSGIContainer(app))
-    http_server.listen(opts.port)
-
-    print "Server listening on port {}".format(opts.port)
 
     signal.signal(signal.SIGTERM, on_exit) # OS says terminate
     signal.signal(signal.SIGINT, on_exit) # ctrl-c
 
-    IOLoop.current().start()
+    if opts.daemonize:
+        import daemon
+        ctx = daemon.DaemonContext(
+            working_directory=opts.work_dir,
+            initgroups=False,
+            stdout=open("{}/stdout.log".format(opts.log_dir), "w"),
+            stderr=open("{}/stderr.log".format(opts.log_dir), "w"),
+        )
+        with ctx:
+            run_server(opts)
+    else:
+        run_server(opts)
+
 
 if __name__ == "__main__":
     main(sys.argv)

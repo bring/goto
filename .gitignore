@@ -1,2 +1,5 @@
 links.json
 venv/
+*.pid
+*.log
+*.pyc

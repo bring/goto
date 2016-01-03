@@ -4,5 +4,7 @@ links.json
 .git
 .gitignore
 .rsyncignore
-logs/
+*.log
+*.pid
+*.pyc
 venv/
