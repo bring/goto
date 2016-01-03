@@ -6,7 +6,7 @@ Simple URL shortener in Python/Flask.
 Running locally
 ===============
 
-Use [virtualenv][1]:
+Use [virtualenv](http://flask.pocoo.org/docs/0.10/installation/#virtualenv):
 
     # install virtualenv if not installed already:
     [ $(which virtualenv) ] && echo "already installed" || pip install virtualenv
@@ -24,8 +24,3 @@ Install requirements (if first or requirements changed):
 Run it:
 
     python run.py
-
-References
-==========
-
-[1]: http://flask.pocoo.org/docs/0.10/installation/#virtualenv
