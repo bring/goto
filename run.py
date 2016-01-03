@@ -1,10 +1,13 @@
 #!/usr/bin/env python
 
-import json
-import time
 import os
 import signal
 import sys
+
+import json
+import time
+
+from argparse import ArgumentParser, RawDescriptionHelpFormatter
 from flask import Flask, g, flash, request, redirect, render_template, make_response, url_for
 from tornado.wsgi import WSGIContainer
 from tornado.httpserver import HTTPServer
@@ -12,7 +15,7 @@ from tornado.ioloop import IOLoop
 
 links_file = "./links.json"
 
-app = Flask("goto")
+app = Flask(__name__)
 app.debug = True
 app.secret_key = "not so secret"
 
@@ -30,18 +33,12 @@ def save_links(links):
     with open(links_file, "w") as f:
         json.dump(links, f)
 
-def has_link(name):
-    return any(l['name'] == name for l in g.links)
-
 def find_link(name):
     found = [l for l in g.links if l['name'] == name]
     if len(found) == 1:
         return found[0]
     else:
         return None
-
-def timestamp():
-    return time.strftime("%Y-%m-%dT%H:%M:%S%z", time.localtime())
 
 @app.before_request
 def before_request():
@@ -53,27 +50,28 @@ def index():
 
 @app.route("/", methods=["POST"])
 def add_or_update_link():
-    name = request.form["name"].strip()
+    name = request.form["name"].strip().lower()
     url = request.form["url"].strip()
+    timestamp = time.strftime("%Y-%m-%dT%H:%M:%S%z", time.localtime())
 
     link = find_link(name)
     if link:
-        link['url'] = request.form["url"]
-        link['date'] = timestamp()
+        link['url'] = url
+        link['date'] = timestamp
         link['visits'] = 0
         save_links(g.links)
         flash(u"Updated link '{name}' to {url}".format(**locals()), "success")
-        return redirect(url_for("index"), code=200)
     else:
         g.links.append({
             "name": name,
             "url": url,
-            "date": timestamp(),
+            "date": timestamp,
             "visits": 0
         })
         save_links(g.links)
         flash(u"Added link from '{name}' to {url}".format(**locals()), "success")
-        return redirect(url_for("index"), code=201)
+    
+    return redirect(url_for("index"), code=303)
 
 @app.route("/<name>", methods=["GET"])
 def goto(name):
@@ -120,13 +118,56 @@ def suggest(prefix):
     response.headers["Vary"] = "Accept-Encoding"
     return response
 
-if __name__ == "__main__":
+def main(argv):
     def on_exit(sig, func=None):
-        print "Gonna go ahead and die"
-        sys.exit(1)
-    signal.signal(signal.SIGTERM, on_exit)
-    port = 7410
+        print "Close application"
+        IOLoop.current().stop()
+
+    def write_pid(pid_file):
+        pid = str(os.getpid())
+        file(pid_file, 'w').write(pid)
+
+    parser = ArgumentParser(
+        prog=os.path.basename(__file__),
+        description="Simple URL shorterner",
+        formatter_class=RawDescriptionHelpFormatter
+    )
+    parser.add_argument("-d", "--data-dir",
+        help="store data in given directory (default: current directory)",
+        default=".")
+    parser.add_argument("-D", "--daemonize",
+        help="run server in background (default: run in foreground)",
+        action="store_true")
+    parser.add_argument("-p", "--port",
+        help="set listen port (default: 7410)",
+        type=int, default=7410)
+    parser.add_argument("-P", "--pid-file",
+        help="store pid in a file (default: don't store)")
+
+    opts = parser.parse_args()
+
+    if opts.data_dir is not None:
+        print "Set data_dir to {}".format(opts.data_dir)
+        links_file = "{}/links.json".format(opts.data_dir)
+
+    if opts.pid_file is not None:
+        print "Write pid to {}".format(opts.pid_file)
+        write_pid(opts.pid_file)
+
+    if opts.daemonize:
+        print "run in background"
+    else:
+        print "run in foreground"
+
     http_server = HTTPServer(WSGIContainer(app))
-    http_server.listen(port)
-    print "Server listening on port {}".format(port)
+    http_server.listen(opts.port)
+
+    print "Server listening on port {}".format(opts.port)
+
+    signal.signal(signal.SIGTERM, on_exit) # OS says terminate
+    signal.signal(signal.SIGINT, on_exit) # ctrl-c
+
     IOLoop.current().start()
+
+if __name__ == "__main__":
+    main(sys.argv)
