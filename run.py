@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import argparse
+import atexit
 import os
 import signal
 import sys
@@ -127,6 +128,7 @@ def run_server(opts):
 
     if opts.pid_file is not None:
         file(opts.pid_file, 'w').write(str(os.getpid()))
+        atexit.register(os.unlink, opts.pid_file)
 
     IOLoop.current().start()
 
