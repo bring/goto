@@ -34,11 +34,7 @@ def save_links(links):
         json.dump(links, f)
 
 def find_link(name):
-    found = [l for l in g.links if l['name'] == name]
-    if len(found) == 1:
-        return found[0]
-    else:
-        return None
+    return {l['name']: l for l in g.links}.get(name, None)
 
 @app.before_request
 def before_request():
@@ -135,7 +131,6 @@ def run_server(opts):
         file(opts.pid_file, 'w').write(str(os.getpid()))
 
     IOLoop.current().start()
-
 
 def main(argv):
     def on_exit(sig, func=None):
