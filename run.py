@@ -55,7 +55,7 @@ def add_or_update_link():
     timestamp = time.strftime("%Y-%m-%dT%H:%M:%S%z", time.localtime())
 
     link = find_link(name)
-    if link:
+    if link is not None:
         link['url'] = url
         link['date'] = timestamp
         link['visits'] = 0
@@ -87,7 +87,7 @@ def goto(name):
 @app.route("/<name>", methods=["DELETE"])
 def delete_link(name):
     link = find_link(name)
-    if link:
+    if link is not None:
         g.links = [l for l in g.links if l['name'] != name]
         save_links(g.links)
         flash(u"Deleted link {} to {}".format(link['name'], link['url']), "error")
