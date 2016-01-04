@@ -39,9 +39,19 @@ def find_link(name):
 def before_request():
     g.links = load_links()
 
+def request_wants_json():
+    best = request.accept_mimetypes \
+        .best_match(['application/json', 'text/html'])
+    return best == 'application/json' and \
+        request.accept_mimetypes[best] > \
+        request.accept_mimetypes['text/html']
+
 @app.route("/", methods=["GET"])
 def index():
-    return render_template('index.html')
+    if request_wants_json():
+        return json.dumps(g.links, indent=2)
+    else:
+        return render_template('index.html')
 
 @app.route("/", methods=["POST"])
 def add_or_update_link():
