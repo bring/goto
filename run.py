@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import argparse
 import os
 import signal
 import sys
@@ -7,7 +8,6 @@ import sys
 import json
 import time
 
-from argparse import ArgumentParser, RawDescriptionHelpFormatter
 from flask import Flask, g, flash, request, redirect, render_template, make_response, url_for
 from tornado.wsgi import WSGIContainer
 from tornado.httpserver import HTTPServer
@@ -135,10 +135,9 @@ def main(argv):
         log("Close application (signal: {})".format(sig))
         IOLoop.current().stop()
 
-    parser = ArgumentParser(
+    parser = argparse.ArgumentParser(
         prog=os.path.basename(__file__),
-        description="Simple URL shorterner",
-        formatter_class=RawDescriptionHelpFormatter
+        description="Simple URL shorterner"
     )
     parser.add_argument("-d", "--data-dir",
         help="store data in given directory (default: current directory)",
