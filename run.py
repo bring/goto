@@ -24,9 +24,7 @@ def load_links():
         with open(links_file, "r") as f:
             links = json.load(f)
             return sorted(links, key=lambda link: link['visits'], reverse=True)
-    except ValueError:
-        return []
-    except IOError:
+    except (ValueError, IOError):
         return []
 
 def save_links(links):
