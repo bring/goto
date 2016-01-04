@@ -118,13 +118,9 @@ def log(message):
     print "{timestamp} - {message}".format(**locals())
 
 def run_server(opts):
-    if opts.data_dir is not None:
-        global links_file
-        links_file = "{}/links.json".format(opts.data_dir)
-
     http_server = HTTPServer(WSGIContainer(app))
     http_server.listen(opts.port)
-    log("Server listening on http://0.0.0.0:{}/ (pid: {})".format(opts.port, os.getpid()))
+    app.logger.info("Server listening on http://0.0.0.0:{}/ (pid: {})".format(opts.port, os.getpid()))
 
     if opts.pid_file is not None:
         def write_pid_file():
@@ -167,24 +163,34 @@ def main(argv):
     parser.add_argument("-l", "--log-dir",
         help="log directory to set when daemonizing (default: current directory)",
         default=".")
+    parser.add_argument("--development",
+        help="run app with Flask's werkzeug server in debug mode",
+        action="store_true")
 
     opts = parser.parse_args()
 
-    signal.signal(signal.SIGTERM, on_exit) # OS says terminate
-    signal.signal(signal.SIGINT, on_exit) # ctrl-c
+    if opts.data_dir is not None:
+        global links_file
+        links_file = "{}/links.json".format(opts.data_dir)
 
-    if opts.daemonize:
-        import daemon
-        ctx = daemon.DaemonContext(
-            working_directory=opts.work_dir,
-            initgroups=False,
-            stdout=open("{}/stdout.log".format(opts.log_dir), "w"),
-            stderr=open("{}/stderr.log".format(opts.log_dir), "w"),
-        )
-        with ctx:
-            run_server(opts)
+    if opts.development:
+        app.run(debug=True, port=opts.port)
     else:
-        run_server(opts)
+        signal.signal(signal.SIGTERM, on_exit) # OS says terminate
+        signal.signal(signal.SIGINT, on_exit) # ctrl-c
+
+        if opts.daemonize:
+            import daemon
+            ctx = daemon.DaemonContext(
+                working_directory=opts.work_dir,
+                initgroups=False,
+                stdout=open("{}/stdout.log".format(opts.log_dir), "w"),
+                stderr=open("{}/stderr.log".format(opts.log_dir), "w"),
+            )
+            with ctx:
+                run_server(opts)
+        else:
+            run_server(opts)
 
 
 if __name__ == "__main__":

@@ -23,4 +23,4 @@ Install requirements (if first or requirements changed):
 
 Run it:
 
-    python run.py
+    python run.py --development
