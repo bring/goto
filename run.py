@@ -49,7 +49,9 @@ def request_wants_json():
 @app.route("/", methods=["GET"])
 def index():
     if request_wants_json():
-        return json.dumps(g.links, indent=2)
+        response = make_response(json.dumps(g.links))
+        response.headers["Content-Type"] = "application/json; charset=utf-8"
+        return response
     else:
         return render_template('index.html')
 
