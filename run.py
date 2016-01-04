@@ -127,8 +127,17 @@ def run_server(opts):
     log("Server listening on http://0.0.0.0:{}/ (pid: {})".format(opts.port, os.getpid()))
 
     if opts.pid_file is not None:
-        file(opts.pid_file, 'w').write(str(os.getpid()))
-        atexit.register(os.unlink, opts.pid_file)
+        def write_pid_file():
+            with open(opts.pid_file, "w") as f:
+                f.write(str(os.getpid()))
+        def try_to_delete_pid_file():
+            try:
+                os.unlink(opts.pid_file)
+            except OSError as ignore:
+                pass
+
+        write_pid_file()
+        atexit.register(try_to_delete_pid_file)
 
     IOLoop.current().start()
 
